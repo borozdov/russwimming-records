@@ -2,11 +2,19 @@ name: Daily update
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # каждый день в 06:00 UTC (09:00 МСК)
-  workflow_dispatch:        # можно запустить вручную
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   update:
@@ -39,6 +47,29 @@ jobs:
                   public/records.xlsx \
                   public/records.md \
                   public/records.txt
-          git diff --cached --quiet \
-            || git commit -m "data: update records $(date -u +%Y-%m-%d)" \
-            && git push
+          if git diff --cached --quiet; then
+            echo "No changes, skipping commit"
+          else
+            git commit -m "data: update records $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
