@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   update:
@@ -30,30 +28,17 @@ jobs:
       - name: Build site
         run: python scripts/build.py
 
-      - name: Commit updated data
+      - name: Commit if changed
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ public/
-          git diff --cached --quiet || git commit -m "chore: daily records update $(date -u +%Y-%m-%d)"
-          git push
-
-  deploy:
-    needs: update
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public/
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          git add data/russia.json \
+                  public/index.html \
+                  public/records.json \
+                  public/records.csv \
+                  public/records.xlsx \
+                  public/records.md \
+                  public/records.txt
+          git diff --cached --quiet \
+            || git commit -m "data: update records $(date -u +%Y-%m-%d)" \
+            && git push
