@@ -44,7 +44,6 @@ jobs:
                   public/index.html \
                   public/records.json \
                   public/records.csv \
-                  public/records.xlsx \
                   public/records.md \
                   public/records.txt
           if git diff --cached --quiet; then
