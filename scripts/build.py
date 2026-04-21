@@ -268,6 +268,7 @@ INDEX_TEMPLATE = """<!doctype html>
     Данные синхронизируются раз в сутки с <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.<br>
     Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.<br>
     Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
+    &nbsp;·&nbsp; Сделано <a href="https://borozdov.ru" rel="noopener" target="_blank">borozdov.ru</a>
   </footer>
 </main>
 
@@ -329,6 +330,45 @@ def write_index(data: dict, out: Path) -> None:
     out.write_text(html_doc, encoding="utf-8")
 
 
+ROBOTS_TXT = f"""User-agent: *
+Allow: /
+
+Sitemap: https://{SITE_DOMAIN}/sitemap.xml
+"""
+
+NOT_FOUND_HTML = f"""<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Страница не найдена — Рекорды России по плаванию</title>
+<meta http-equiv="refresh" content="0; url=https://{SITE_DOMAIN}/">
+<link rel="canonical" href="https://{SITE_DOMAIN}/">
+</head>
+<body>
+<p>Страница не найдена. <a href="https://{SITE_DOMAIN}/">Перейти на главную →</a></p>
+<script>window.location.replace("https://{SITE_DOMAIN}/")</script>
+</body>
+</html>
+"""
+
+
+def write_sitemap(data: dict, out: Path) -> None:
+    lastmod = data["fetched_at"][:10]
+    sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f'  <url>\n'
+        f'    <loc>https://{SITE_DOMAIN}/</loc>\n'
+        f'    <lastmod>{lastmod}</lastmod>\n'
+        f'    <changefreq>daily</changefreq>\n'
+        f'    <priority>1.0</priority>\n'
+        f'  </url>\n'
+        '</urlset>\n'
+    )
+    out.write_text(sitemap, encoding="utf-8")
+
+
 def main() -> int:
     data = load_data()
     PUBLIC.mkdir(parents=True, exist_ok=True)
@@ -336,6 +376,9 @@ def main() -> int:
 
     copy_static()
     write_index(data, PUBLIC / "index.html")
+    write_sitemap(data, PUBLIC / "sitemap.xml")
+    (PUBLIC / "robots.txt").write_text(ROBOTS_TXT, encoding="utf-8")
+    (PUBLIC / "404.html").write_text(NOT_FOUND_HTML, encoding="utf-8")
     # Public copy of the canonical data
     (PUBLIC / "records.json").write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",
