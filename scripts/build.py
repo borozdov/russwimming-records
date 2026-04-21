@@ -199,9 +199,6 @@ INDEX_TEMPLATE = """<!doctype html>
 
 <div class="site-hero">
   <div class="hero-inner">
-    <div class="creator-bar">
-      Сделано <a href="https://borozdov.ru" rel="noopener" target="_blank">borozdov.ru</a>
-    </div>
     <div class="hero-top">
       <div>
         <h1 class="site-title">
@@ -211,6 +208,10 @@ INDEX_TEMPLATE = """<!doctype html>
           Источник: <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru/records/russia/</a>
           &nbsp;·&nbsp; обновлено <time datetime="{fetched_at_iso}"><strong>{fetched_at_human}</strong></time>
           {history_link}
+        </p>
+        <p class="site-meta">
+          Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
+          &nbsp;·&nbsp; Сделано <a href="https://borozdov.ru" rel="noopener" target="_blank">borozdov.ru</a>
         </p>
         <div class="stat-row" style="margin-top:12px">
           <div class="stat-pill"><strong id="total-count">{total}</strong> рекордов</div>
@@ -270,7 +271,6 @@ INDEX_TEMPLATE = """<!doctype html>
   <footer class="footer">
     Данные синхронизируются раз в сутки с <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.<br>
     Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.<br>
-    Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
   </footer>
 </main>
 
