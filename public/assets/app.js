@@ -601,7 +601,8 @@
   // --- Download PNG ---
   const dlPngBtn = document.getElementById("dl-png-btn");
   if (dlPngBtn) {
-    dlPngBtn.addEventListener("click", async () => {
+    dlPngBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       const orig = dlPngBtn.textContent;
       dlPngBtn.textContent = "⏳…";
       dlPngBtn.disabled = true;
@@ -628,7 +629,8 @@
   // --- Download PDF ---
   const dlPdfBtn = document.getElementById("dl-pdf-btn");
   if (dlPdfBtn) {
-    dlPdfBtn.addEventListener("click", async () => {
+    dlPdfBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       const orig = dlPdfBtn.textContent;
       dlPdfBtn.textContent = "⏳…";
       dlPdfBtn.disabled = true;

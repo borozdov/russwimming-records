@@ -474,14 +474,6 @@ table.records tbody tr:hover { background: var(--surface-hover); }
   transition: background .1s;
 }
 .download-menu-panel a:hover { background: var(--surface-hover); text-decoration: none; }
-.download-menu-panel .dl-btn-item {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; padding: 9px 11px; border-radius: 6px;
-  color: var(--text); font-size: 13.5px; background: none;
-  border: none; cursor: pointer; width: 100%; text-align: left;
-  transition: background .1s; font-family: inherit;
-}
-.download-menu-panel .dl-btn-item:hover { background: var(--surface-hover); }
 .download-menu-panel .hint {
   color: var(--text-sub);
   font-size: 11.5px;
