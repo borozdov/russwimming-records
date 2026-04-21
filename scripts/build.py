@@ -31,7 +31,9 @@ PUBLIC = ROOT / "public"
 ASSETS = PUBLIC / "assets"
 
 SITE_TITLE = "Рекорды России по плаванию"
-SITE_TAGLINE = "Автообновляемое зеркало таблицы с russwimming.ru"
+SITE_TAGLINE = "Актуальные рекорды России по плаванию — вольный стиль, брасс, баттерфляй, спина, комплекс. Мужчины и женщины, бассейны 50 м и 25 м."
+SITE_KEYWORDS = "рекорды России по плаванию, плавание рекорды, вольный стиль, брасс, баттерфляй, на спине, комплексное плавание, бассейн 50м, бассейн 25м, russwimming"
+SITE_DOMAIN = "russwimming-records.borozdov.ru"
 REPO_URL_ENV = "REPO_URL"  # optional, set in workflow; shown as "История" link
 
 CSV_HEADERS = [
@@ -175,11 +177,21 @@ INDEX_TEMPLATE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
 <meta name="description" content="{description}">
+<meta name="keywords" content="{keywords}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://{domain}/">
+<meta property="og:type" content="website">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{description}">
+<meta property="og:url" content="https://{domain}/">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{description}">
 <meta name="theme-color" content="#0057b8">
-<title>{title}</title>
+<script type="application/ld+json">{jsonld}</script>
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='56'>🏊</text></svg>">
 <link rel="stylesheet" href="./assets/style.css">
 </head>
@@ -254,7 +266,8 @@ INDEX_TEMPLATE = """<!doctype html>
 
   <footer class="footer">
     Данные синхронизируются раз в сутки с <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.<br>
-    Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.
+    Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.<br>
+    Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
   </footer>
 </main>
 
@@ -284,9 +297,27 @@ def write_index(data: dict, out: Path) -> None:
             f'Откройте issue</a>.'
         )
 
+    jsonld = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": SITE_TITLE,
+        "description": SITE_TAGLINE,
+        "url": f"https://{SITE_DOMAIN}/",
+        "dateModified": data["fetched_at"],
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "creator": {"@type": "Organization", "name": "Всероссийская федерация плавания", "url": "https://russwimming.ru"},
+        "distribution": [
+            {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": f"https://{SITE_DOMAIN}/records.json"},
+            {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": f"https://{SITE_DOMAIN}/records.csv"},
+        ],
+    }, ensure_ascii=False)
+
     html_doc = INDEX_TEMPLATE.format(
         title=html.escape(SITE_TITLE),
         description=html.escape(SITE_TAGLINE),
+        keywords=html.escape(SITE_KEYWORDS),
+        domain=SITE_DOMAIN,
+        jsonld=jsonld,
         source_url=html.escape(data["source_url"]),
         total=data["total_records"],
         fetched_at_iso=data["fetched_at"],
