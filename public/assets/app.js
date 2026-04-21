@@ -598,6 +598,70 @@
     });
   }
 
+  // --- Download PNG ---
+  const dlPngBtn = document.getElementById("dl-png-btn");
+  if (dlPngBtn) {
+    dlPngBtn.addEventListener("click", async () => {
+      const orig = dlPngBtn.textContent;
+      dlPngBtn.textContent = "⏳…";
+      dlPngBtn.disabled = true;
+      dlMenu.classList.remove("open");
+      try {
+        const canvas = renderShareCanvas();
+        const blob = await canvasToBlob(canvas);
+        const filename = `records-${new Date().toISOString().slice(0, 10)}.png`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (err) {
+        console.error(err);
+        alert("Не удалось создать PNG: " + (err.message || err));
+      } finally {
+        dlPngBtn.textContent = orig;
+        dlPngBtn.disabled = false;
+      }
+    });
+  }
+
+  // --- Download PDF ---
+  const dlPdfBtn = document.getElementById("dl-pdf-btn");
+  if (dlPdfBtn) {
+    dlPdfBtn.addEventListener("click", async () => {
+      const orig = dlPdfBtn.textContent;
+      dlPdfBtn.textContent = "⏳…";
+      dlPdfBtn.disabled = true;
+      dlMenu.classList.remove("open");
+      try {
+        if (!window.jspdf) {
+          await new Promise((res, rej) => {
+            const s = document.createElement("script");
+            s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        }
+        const canvas = renderShareCanvas();
+        const imgData = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const px2mm = 0.264583;
+        const w = canvas.width * px2mm;
+        const h = canvas.height * px2mm;
+        const orientation = w > h ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "mm", format: [w, h] });
+        pdf.addImage(imgData, "PNG", 0, 0, w, h);
+        pdf.save(`records-${new Date().toISOString().slice(0, 10)}.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert("Не удалось создать PDF: " + (err.message || err));
+      } finally {
+        dlPdfBtn.textContent = orig;
+        dlPdfBtn.disabled = false;
+      }
+    });
+  }
+
   // --- Init ---
   if (searchEl) searchEl.value = state.search;
   render();

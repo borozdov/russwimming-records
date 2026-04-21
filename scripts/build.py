@@ -245,6 +245,14 @@ INDEX_TEMPLATE = """<!doctype html>
               <span><span class="dl-icon">≡</span> TXT</span>
               <span class="hint">фикс-ширина</span>
             </a>
+            <button id="dl-png-btn" class="dl-btn-item">
+              <span><span class="dl-icon">🖼</span> PNG</span>
+              <span class="hint">изображение таблицы</span>
+            </button>
+            <button id="dl-pdf-btn" class="dl-btn-item">
+              <span><span class="dl-icon">📄</span> PDF</span>
+              <span class="hint">документ таблицы</span>
+            </button>
           </div>
         </div>
       </div>
