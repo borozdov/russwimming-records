@@ -165,23 +165,17 @@ def main() -> int:
     total = sum(len(c["records"]) for c in categories)
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # Preserve `fetched_at` when records are identical so the file only changes
-    # when there is a real update — this keeps git diffs meaningful.
-    prior_fetched_at = None
     prior_categories = None
     if OUT.exists():
         try:
             prior = json.loads(OUT.read_text(encoding="utf-8"))
-            prior_fetched_at = prior.get("fetched_at")
             prior_categories = prior.get("categories")
         except (json.JSONDecodeError, OSError):
             pass
 
-    fetched_at = now_iso if prior_categories != categories else (prior_fetched_at or now_iso)
-
     payload = {
         "source_url": SOURCE_URL,
-        "fetched_at": fetched_at,
+        "fetched_at": now_iso,
         "total_records": total,
         "categories": categories,
     }
