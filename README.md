@@ -11,6 +11,8 @@
 
 | Формат | Ссылка |
 |--------|--------|
+| PNG    | [records.png](https://russwimming-records.borozdov.ru/records.png) |
+| PDF    | [records.pdf](https://russwimming-records.borozdov.ru/records.pdf) |
 | JSON   | [records.json](https://russwimming-records.borozdov.ru/records.json) |
 | CSV    | [records.csv](https://russwimming-records.borozdov.ru/records.csv) |
 | Excel  | [records.xlsx](https://russwimming-records.borozdov.ru/records.xlsx) |
