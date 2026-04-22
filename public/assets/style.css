@@ -629,3 +629,5 @@ table.records tbody tr:hover { background: var(--surface-hover); }
   .print-signature strong { color: #000; font-weight: 700; }
   .print-signature a { color: #000 !important; }
 }
+
+.download-menu-panel a.loading { pointer-events: none; opacity: 0.5; }
