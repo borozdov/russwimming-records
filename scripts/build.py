@@ -245,13 +245,13 @@ INDEX_TEMPLATE = """<!doctype html>
               <span><span class="dl-icon">≡</span> TXT</span>
               <span class="hint">фикс-ширина</span>
             </a>
-            <a href="./records.png" download>
+            <a id="dl-png-btn" href="#">
               <span><span class="dl-icon">🖼</span> PNG</span>
-              <span class="hint">красивая таблица</span>
+              <span class="hint">изображение таблицы</span>
             </a>
-            <a href="./records.pdf" download>
+            <a id="dl-pdf-btn" href="#">
               <span><span class="dl-icon">📄</span> PDF</span>
-              <span class="hint">для печати</span>
+              <span class="hint">документ таблицы</span>
             </a>
           </div>
         </div>
@@ -398,9 +398,6 @@ def main() -> int:
     write_xlsx(data, PUBLIC / "records.xlsx")
     write_markdown(data, PUBLIC / "records.md")
     write_txt(data, PUBLIC / "records.txt")
-
-    import subprocess, sys
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "render.py")], check=True)
 
     print(f"built {PUBLIC.relative_to(ROOT)}/ — {data['total_records']} records")
     return 0

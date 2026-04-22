@@ -50,9 +50,7 @@ jobs:
                   public/records.json \
                   public/records.csv \
                   public/records.md \
-                  public/records.txt \
-                  public/records.png \
-                  public/records.pdf
+                  public/records.txt
           git commit -m "data: update records $(date -u +%Y-%m-%d)"
           git push
 
