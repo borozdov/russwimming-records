@@ -1,7 +1,7 @@
 {
   "source_url": "https://russwimming.ru/records/russia/",
-  "fetched_at": "2026-04-26T07:49:35Z",
-  "total_records": 90,
+  "fetched_at": "2026-04-27T08:38:44Z",
+  "total_records": 91,
   "categories": [
     {
       "id": "women-lcm",
@@ -9,6 +9,23 @@
       "sex": "women",
       "pool": "lcm",
       "records": [
+        {
+          "discipline": "на спине 50 м",
+          "relay": false,
+          "relay_count": null,
+          "leg_distance_m": null,
+          "total_distance_m": 50,
+          "distance_m": 50,
+          "stroke_id": "backstroke",
+          "is_25m_pool": false,
+          "athlete": "Гайфутдинова Алина",
+          "roster": null,
+          "result": "27.23",
+          "result_seconds": 27.23,
+          "location": "Санкт-Петербург",
+          "date": "2026-04-19",
+          "date_original": "19.04.2026"
+        },
         {
           "discipline": "на спине 50 м",
           "relay": false,
