@@ -233,6 +233,17 @@
     renderTable();
   };
 
+  // --- Toast ---
+  const toastEl = document.getElementById("dl-toast");
+  let toastTimer = null;
+  const showToast = (msg = "Скачивание началось, ждите…") => {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3000);
+  };
+
   // --- Download menu ---
   const dlBtn = document.getElementById("dl-btn");
   const dlMenu = document.getElementById("dl-menu");
@@ -245,6 +256,12 @@
       if (!dlMenu.contains(e.target)) dlMenu.classList.remove("open");
     });
   }
+
+  // Toast on static file downloads (JSON, CSV, XLSX, MD, TXT)
+  document.querySelectorAll(".download-menu-panel a[download]").forEach((a) => {
+    a.addEventListener("click", () => { if (dlMenu) dlMenu.classList.remove("open"); showToast(); });
+  });
+
   const setPrintDate = () => {
     const sig = document.querySelector(".print-signature .print-date");
     if (sig) sig.textContent = "Распечатано " + new Date().toLocaleDateString("ru-RU");
@@ -553,16 +570,16 @@
 
         // Result — gold pill for top result highlight
         const isBest = i === 0;
-        const resultX = cols[ci].x + cols[ci].w - 6;
         const resultStr = rec.result;
         ctx.font = `700 14px ${MONO}`;
-        const rw = ctx.measureText(resultStr).width + 20;
-        const rpx = resultX - rw;
+        const rtw = ctx.measureText(resultStr).width;
+        const rw = rtw + 32;
+        const rpx = cols[ci].x + cols[ci].w - 6 - rw;
         roundRect(ctx, rpx, mid - 14, rw, 28, 7);
         ctx.fillStyle = isBest ? "#fff3cd" : "#eef3fb"; ctx.fill();
         ctx.fillStyle = isBest ? "#b35900" : "#0057b8";
-        ctx.textAlign = "right"; ctx.textBaseline = "middle";
-        ctx.fillText(resultStr, resultX - 4, mid);
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(resultStr, rpx + rw / 2, mid);
         ctx.textAlign = "left"; ctx.textBaseline = "top";
         ci++;
 
@@ -671,6 +688,7 @@
       pngBusy = true;
       dlPngBtn.classList.add("loading");
       dlMenu.classList.remove("open");
+      showToast("Создаём PNG, ждите…");
       try {
         const canvas = renderShareCanvas();
         const blob = await canvasToBlob(canvas);
@@ -700,6 +718,7 @@
       pdfBusy = true;
       dlPdfBtn.classList.add("loading");
       dlMenu.classList.remove("open");
+      showToast("Создаём PDF, ждите…");
       try {
         if (!window.jspdf) {
           await new Promise((res, rej) => {

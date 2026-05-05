@@ -603,3 +603,27 @@ table.records tbody tr:hover { background: var(--surface-hover); }
 }
 
 .download-menu-panel a.loading { pointer-events: none; opacity: 0.5; }
+
+/* ── Download toast ── */
+.dl-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--surface);
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 1000;
+  white-space: nowrap;
+}
+.dl-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
