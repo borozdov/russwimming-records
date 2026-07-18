@@ -75,8 +75,8 @@ def write_xlsx(data: dict, out: Path) -> None:
     wb = Workbook()
     wb.remove(wb.active)
 
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill("solid", fgColor="0369A1")
+    header_font = Font(bold=True, color="FAFAFA")
+    header_fill = PatternFill("solid", fgColor="0D0D0D")
     mono_font = Font(name="Menlo")
     center = Alignment(horizontal="center", vertical="center")
 
@@ -172,17 +172,115 @@ def copy_static() -> None:
         shutil.copy2(STATIC / name, ASSETS / name)
 
 
+def fmt_date_ru(iso: str, orig: str) -> str:
+    return ".".join(reversed(iso.split("-"))) if iso else (orig or "")
+
+
+def latest_record_date(data: dict) -> str:
+    dates = [r["date"] for c in data["categories"] for r in c["records"] if r["date"]]
+    return ".".join(reversed(max(dates).split("-"))) if dates else "—"
+
+
+def render_table_html(data: dict) -> str:
+    """Серверный рендер таблицы: контент виден поисковикам и без JS.
+    Разметка идентична клиентскому рендеру в static/app.js (состояние по умолчанию)."""
+    fresh_year = data["fetched_at"][:4]
+    e = html.escape
+
+    def badges(r: dict) -> str:
+        out = ""
+        if r["date"] and r["date"].startswith(fresh_year):
+            out += '<span class="badge badge-fresh">Новое</span>'
+        if r["relay"]:
+            out += '<span class="badge badge-relay">Эстафета</span>'
+        return out
+
+    cols = [
+        ("discipline", "Дисциплина", False),
+        ("athlete", "Спортсмен", False),
+        ("result", "Результат", True),
+        ("location", "Место", False),
+        ("date", "Дата", True),
+    ]
+    head = "".join(
+        f'<th class="{"num" if num else ""}" data-key="{key}" aria-sort="none" '
+        f'title="Сортировать">{label}<span class="sort-ind"></span></th>'
+        for key, label, num in cols
+    )
+
+    rows, cards = [], []
+    for cat in data["categories"]:
+        rows.append(
+            f'<tr class="group-row"><td colspan="5">{e(cat["title"])}'
+            f'<span class="group-count">{len(cat["records"])}</span></td></tr>'
+        )
+        cards.append(f'<div class="card-group-head">{e(cat["title"])}</div>')
+        for r in cat["records"]:
+            b = badges(r)
+            date_h = fmt_date_ru(r["date"], r["date_original"])
+            roster = f'<div class="roster">{e(" · ".join(r["roster"]))}</div>' if r["roster"] else ""
+            rows.append(
+                "<tr>"
+                f'<td class="col-disc">{e(r["discipline"])}{b}</td>'
+                f'<td>{e(r["athlete"])}{roster}</td>'
+                f'<td class="col-result">{e(r["result"])}</td>'
+                f'<td class="col-loc">{e(r["location"])}</td>'
+                f'<td class="col-date">{date_h}</td>'
+                "</tr>"
+            )
+            roster_c = f' · {e(", ".join(r["roster"]))}' if r["roster"] else ""
+            cards.append(
+                '<article class="card">'
+                '<div class="card-top">'
+                f'<span class="card-disc">{e(r["discipline"])}{b}</span>'
+                f'<span class="card-result">{e(r["result"])}</span>'
+                "</div>"
+                f'<div class="card-athlete">{e(r["athlete"])}{roster_c}</div>'
+                f'<div class="card-meta">{e(r["location"])} · <span class="mono">{date_h}</span></div>'
+                "</article>"
+            )
+
+    return (
+        '<div class="table-frame">'
+        f'<div class="table-scroll"><table class="records"><thead><tr>{head}</tr></thead>'
+        f'<tbody>{"".join(rows)}</tbody></table></div>'
+        f'<div class="cards">{"".join(cards)}</div>'
+        "</div>"
+    )
+
+
+FAVICON = (
+    "data:image/svg+xml;utf8,"
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+    "<rect width='100' height='100' rx='16' fill='%23fafafa'/>"
+    "<text x='50' y='53' dominant-baseline='central' text-anchor='middle' "
+    "font-family='Inter,Helvetica,Arial,sans-serif' font-weight='700' font-size='60' "
+    "fill='%230d0d0d'>Р</text></svg>"
+)
+
 INDEX_TEMPLATE = """<!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="obsidian">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// Лик следует за средой; ручной выбор — с памятью (брендбук §1.5)
+(function () {{
+  try {{
+    var s = localStorage.getItem("lik");
+    var lik = (s === "titan" || s === "obsidian") ? s :
+      (window.matchMedia("(prefers-color-scheme: light)").matches ? "titan" : "obsidian");
+    document.documentElement.setAttribute("data-theme", lik);
+  }} catch (e) {{}}
+}})();
+</script>
 <title>{title}</title>
 <meta name="description" content="{description}">
 <meta name="keywords" content="{keywords}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://{domain}/">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Рекорды России по плаванию">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{description}">
 <meta property="og:url" content="https://{domain}/">
@@ -190,9 +288,15 @@ INDEX_TEMPLATE = """<!doctype html>
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{title}">
 <meta name="twitter:description" content="{description}">
-<meta name="theme-color" content="#0057b8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0d0d">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
 <meta name="google-site-verification" content="qOwWmdq24kGcVTyxc1GL2W8TxQk63Z5lBH3NSv4hH4s" />
 <meta name="yandex-verification" content="80f947e774535d84" />
+<link rel="icon" href="{favicon}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/style.css">
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){{
@@ -207,95 +311,97 @@ INDEX_TEMPLATE = """<!doctype html>
 <noscript><div><img src="https://mc.yandex.ru/watch/109049034" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 <script type="application/ld+json">{jsonld}</script>
-<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='56'>🏊</text></svg>">
-<link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
+<a class="skip-link" href="#table">К таблице рекордов</a>
 
-<div class="site-hero">
-  <div class="hero-inner">
-    <div class="hero-top">
-      <div>
-        <h1 class="site-title">
-          <span class="flag">🇷🇺</span> {title}
-        </h1>
-        <p class="site-subtitle">
-          Источник: <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru/records/russia/</a>
-          &nbsp;·&nbsp; обновлено <time datetime="{fetched_at_iso}"><strong>{fetched_at_human}</strong></time>
-          {history_link}
-        </p>
-        <p class="site-meta">
-          Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
-          &nbsp;·&nbsp; Сделано <a href="https://borozdov.ru" rel="noopener" target="_blank">borozdov.ru</a>
-        </p>
-        <div class="stat-row" style="margin-top:12px">
-          <div class="stat-pill"><strong id="total-count">{total}</strong> рекордов</div>
-          <div class="stat-pill"><strong>5</strong> категорий</div>
-          <div class="stat-pill">⟳ раз в сутки</div>
-        </div>
-      </div>
-      <div class="hero-actions">
-        <button class="btn" id="theme-toggle">⌁ Авто</button>
-        <button class="btn" id="print-btn">🖨 Печать</button>
-        <div class="download-menu" id="dl-menu">
-          <button class="btn primary" id="dl-btn">⭳ Скачать ▾</button>
-          <div class="download-menu-panel">
-            <a href="./records.json" download>
-              <span><span class="dl-icon">&#x7B;&#x7D;</span> JSON</span>
-              <span class="hint">структурированно</span>
-            </a>
-            <a href="./records.csv" download>
-              <span><span class="dl-icon">⊞</span> CSV</span>
-              <span class="hint">Excel / Numbers</span>
-            </a>
-            <a href="./records.xlsx" download>
-              <span><span class="dl-icon">⊞</span> XLSX</span>
-              <span class="hint">по листам</span>
-            </a>
-            <a href="./records.md" download>
-              <span><span class="dl-icon">#</span> Markdown</span>
-              <span class="hint">для README</span>
-            </a>
-            <a href="./records.txt" download>
-              <span><span class="dl-icon">≡</span> TXT</span>
-              <span class="hint">фикс-ширина</span>
-            </a>
-            <a id="dl-png-btn" href="#">
-              <span><span class="dl-icon">🖼</span> PNG</span>
-              <span class="hint">изображение таблицы</span>
-            </a>
-            <a id="dl-pdf-btn" href="#">
-              <span><span class="dl-icon">📄</span> PDF</span>
-              <span class="hint">документ таблицы</span>
-            </a>
-          </div>
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="wordmark" href="/">Рекорды России<span class="wordmark-sub">Плавание</span></a>
+    <div class="header-actions">
+      <button class="icon-btn" id="theme-toggle" aria-label="Сменить лик"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>
+      <button class="btn btn-print" id="print-btn">Печать</button>
+      <div class="dl" id="dl-menu">
+        <button class="btn btn-primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg>
+          Скачать
+        </button>
+        <div class="dl-panel">
+          <a href="./records.json" download><span class="fmt">JSON</span><span class="hint">структурированные данные</span></a>
+          <a href="./records.csv" download><span class="fmt">CSV</span><span class="hint">Excel / Numbers</span></a>
+          <a href="./records.xlsx" download><span class="fmt">XLSX</span><span class="hint">книга по листам</span></a>
+          <a href="./records.md" download><span class="fmt">MD</span><span class="hint">таблицы Markdown</span></a>
+          <a href="./records.txt" download><span class="fmt">TXT</span><span class="hint">фиксированная ширина</span></a>
+          <a id="dl-png-btn" href="#"><span class="fmt">PNG</span><span class="hint">картинка таблицы</span></a>
+          <a id="dl-pdf-btn" href="#"><span class="fmt">PDF</span><span class="hint">документ таблицы</span></a>
         </div>
       </div>
     </div>
-    <nav class="hero-tabs" id="tabs" aria-label="Категории"></nav>
   </div>
-</div>
+</header>
 
-<main class="container">
-  <div class="controls">
-    <label class="search">
-      <span class="icon" aria-hidden="true">⌕</span>
-      <input id="search" type="search" placeholder="Поиск по фамилии, дисциплине, городу…" autocomplete="off">
-    </label>
-  </div>
+<main class="shell">
+  <section class="hero">
+    <p class="label">Официальное зеркало · Всероссийская федерация плавания</p>
+    <h1>Рекорды России по&nbsp;плаванию</h1>
+    <p class="hero-meta">
+      Действующие рекорды России: вольный стиль, на спине, брасс, баттерфляй,
+      комплекс и эстафеты. Мужчины, женщины и смешанные команды, бассейны 50 и 25 метров.
+    </p>
+    <p class="hero-links">
+      Источник: <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru/records/russia/</a>
+      · Обновляется автоматически раз в сутки
+    </p>
+    <div class="stat-strip">
+      <div class="stat">
+        <div class="stat-value">{total}</div>
+        <div class="stat-note"><span class="stat-note-text">Действующих рекордов</span><span class="label">В таблице</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{latest_record}</div>
+        <div class="stat-note"><span class="stat-note-text">Последний рекорд</span><span class="label">Дата</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-value"><time datetime="{fetched_at_iso}">{fetched_at_human}</time></div>
+        <div class="stat-note"><span class="stat-note-text">Данные обновлены</span><span class="label">Раз в сутки</span></div>
+      </div>
+    </div>
+  </section>
 
-  <div class="filters" id="filters" aria-label="Фильтры"></div>
-  <div id="table" class="table-wrap"></div>
+  <section class="controls" aria-label="Поиск и фильтры">
+    <div class="search-row">
+      <label class="search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="search" placeholder="Фамилия, дисциплина, город…" autocomplete="off" aria-label="Поиск по таблице">
+        <span class="search-key" aria-hidden="true">/</span>
+      </label>
+      <span class="result-count label">Показано <span id="visible-count"><b class="mono">{total}</b> из <span class="mono">{total}</span></span></span>
+    </div>
+    <div class="filters" id="filters" aria-label="Фильтры"></div>
+  </section>
 
-  <div class="meta-bar">
-    <span>Показано: <strong id="visible-count">—</strong></span>
-  </div>
+  <div id="table">{table_html}</div>
 
   <footer class="footer">
-    Данные синхронизируются раз в сутки с <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.<br>
-    Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.<br>
+    <div class="footer-inner">
+      <div>
+        <p>
+          Данные синхронизируются раз в сутки с
+          <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.
+          Если рекорд отсутствует или выглядит устаревшим — сайт-источник ещё не обновил свою таблицу.
+        </p>
+        <p>
+          Вопросы и предложения: <a href="https://t.me/BorozdovNikita" rel="noopener" target="_blank">@BorozdovNikita</a>
+          {history_link}
+        </p>
+      </div>
+      <div class="signature">By <a href="https://borozdov.ru" rel="noopener" target="_blank">Borozdov</a></div>
+    </div>
+    <div class="print-signature"><span class="print-date"></span></div>
   </footer>
 </main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script id="records-data" type="application/json">{data_json}</script>
 <script src="./assets/app.js"></script>
@@ -311,16 +417,11 @@ def write_index(data: dict, out: Path) -> None:
     import os
     repo_url = os.environ.get(REPO_URL_ENV, "").strip()
     history_link = ""
-    issue_link = "Откройте issue в репозитории."
     if repo_url:
         repo_url = repo_url.rstrip("/")
         history_link = (
             f'· <a href="{repo_url}/commits/main/data/russia.json" '
             f'rel="noopener" target="_blank">история изменений</a>'
-        )
-        issue_link = (
-            f'<a href="{repo_url}/issues/new" rel="noopener" target="_blank">'
-            f'Откройте issue</a>.'
         )
 
     jsonld = json.dumps({
@@ -343,13 +444,15 @@ def write_index(data: dict, out: Path) -> None:
         description=html.escape(SITE_TAGLINE),
         keywords=html.escape(SITE_KEYWORDS),
         domain=SITE_DOMAIN,
+        favicon=FAVICON,
         jsonld=jsonld,
         source_url=html.escape(data["source_url"]),
         total=data["total_records"],
+        latest_record=latest_record_date(data),
         fetched_at_iso=data["fetched_at"],
         fetched_at_human=fetched_human,
         history_link=history_link,
-        issue_link=issue_link,
+        table_html=render_table_html(data),
         data_json=json.dumps(data, ensure_ascii=False).replace("</", "<\\/"),
     )
     out.write_text(html_doc, encoding="utf-8")
