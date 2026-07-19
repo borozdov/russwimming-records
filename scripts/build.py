@@ -31,10 +31,49 @@ PUBLIC = ROOT / "public"
 ASSETS = PUBLIC / "assets"
 
 SITE_TITLE = "Рекорды России по плаванию"
-SITE_TAGLINE = "Актуальные рекорды России по плаванию — вольный стиль, брасс, баттерфляй, спина, комплекс. Мужчины и женщины, бассейны 50 м и 25 м."
+SITE_TAGLINE = (
+    "Действующие рекорды России по плаванию: мужчины, женщины и эстафеты, "
+    "бассейны 50 и 25 м. Таблица обновляется ежедневно. "
+    "Скачать бесплатно: JSON, CSV, XLSX, PDF."
+)
 SITE_KEYWORDS = "рекорды России по плаванию, плавание рекорды, вольный стиль, брасс, баттерфляй, на спине, комплексное плавание, бассейн 50м, бассейн 25м, russwimming"
 SITE_DOMAIN = "russwimming-records.borozdov.ru"
 REPO_URL_ENV = "REPO_URL"  # optional, set in workflow; shown as "История" link
+
+# Видимый FAQ + FAQPage в JSON-LD собираются из одного списка,
+# чтобы разметка всегда совпадала с контентом (требование Google)
+FAQ_ITEMS = [
+    (
+        "Что такое рекорд России по плаванию?",
+        "Лучший официально ратифицированный Всероссийской федерацией плавания "
+        "результат российского спортсмена или сборной, показанный в бассейне "
+        "50 или 25 метров.",
+    ),
+    (
+        "Как часто обновляется таблица рекордов?",
+        "Автоматически раз в сутки: данные синхронизируются с официальной "
+        "таблицей на сайте russwimming.ru. Дата последнего обновления "
+        "показана над таблицей.",
+    ),
+    (
+        "Чем отличаются рекорды в бассейнах 50 и 25 метров?",
+        "Это отдельные списки. В 25-метровом бассейне («короткая вода») больше "
+        "поворотов, результаты быстрее, поэтому рекорды ведутся отдельной таблицей.",
+    ),
+    (
+        "Можно ли скачать таблицу рекордов?",
+        "Да, бесплатно и без регистрации: JSON, CSV, XLSX, Markdown, TXT, "
+        "а также PNG-картинка и PDF-документ таблицы.",
+    ),
+]
+
+DOWNLOAD_FORMATS = [
+    ("records.json", "JSON", "структурированные данные для разработчиков"),
+    ("records.csv", "CSV", "открывается в Excel и Numbers"),
+    ("records.xlsx", "XLSX", "книга Excel: лист на каждую категорию"),
+    ("records.md", "MD", "таблицы Markdown для документов"),
+    ("records.txt", "TXT", "плоский текст фиксированной ширины"),
+]
 
 CSV_HEADERS = [
     "Категория", "Дисциплина", "Тип", "Спортсмен / Команда", "Состав эстафеты",
@@ -306,16 +345,22 @@ INDEX_TEMPLATE = """<!doctype html>
 <meta name="description" content="{description}">
 <meta name="keywords" content="{keywords}">
 <meta name="robots" content="index, follow">
+<meta name="author" content="Никита Бороздов">
 <link rel="canonical" href="https://{domain}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Рекорды России по плаванию">
-<meta property="og:title" content="{title}">
+<meta property="og:title" content="{og_title}">
 <meta property="og:description" content="{description}">
 <meta property="og:url" content="https://{domain}/">
 <meta property="og:locale" content="ru_RU">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="{title}">
+<meta property="og:image" content="https://{domain}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Рекорды России по плаванию — актуальная таблица">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{og_title}">
 <meta name="twitter:description" content="{description}">
+<meta name="twitter:image" content="https://{domain}/og-image.png">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0d0d">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
 <meta name="google-site-verification" content="qOwWmdq24kGcVTyxc1GL2W8TxQk63Z5lBH3NSv4hH4s" />
@@ -398,7 +443,22 @@ INDEX_TEMPLATE = """<!doctype html>
     <div class="filters" id="filters" aria-label="Фильтры"></div>
   </section>
 
+  <h2 class="sr-only">Таблица рекордов России по плаванию</h2>
   <div id="table">{table_html}</div>
+
+  <section class="content-section" aria-labelledby="downloads-h">
+    <h2 id="downloads-h">Скачать таблицу рекордов</h2>
+    <p class="content-section-note">
+      Данные бесплатны и обновляются ежедневно. PNG-картинку и PDF-документ
+      таблицы можно собрать с учётом фильтров — кнопка «Скачать» вверху страницы.
+    </p>
+    <div class="dl-grid">{downloads_html}</div>
+  </section>
+
+  <section class="content-section" aria-labelledby="faq-h">
+    <h2 id="faq-h">Вопросы и ответы</h2>
+    <div class="faq-grid">{faq_html}</div>
+  </section>
 
   <footer class="footer">
     <div class="footer-inner">
@@ -442,23 +502,71 @@ def write_index(data: dict, out: Path) -> None:
             f'rel="noopener" target="_blank">история изменений</a>'
         )
 
+    years = [r["date"][:4] for c in data["categories"] for r in c["records"] if r["date"]]
+    year_min, year_max = (min(years), max(years)) if years else ("", "")
+
     jsonld = json.dumps({
         "@context": "https://schema.org",
-        "@type": "Dataset",
-        "name": SITE_TITLE,
-        "description": SITE_TAGLINE,
-        "url": f"https://{SITE_DOMAIN}/",
-        "dateModified": data["fetched_at"],
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "creator": {"@type": "Organization", "name": "Всероссийская федерация плавания", "url": "https://russwimming.ru"},
-        "distribution": [
-            {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": f"https://{SITE_DOMAIN}/records.json"},
-            {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": f"https://{SITE_DOMAIN}/records.csv"},
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": f"https://{SITE_DOMAIN}/#website",
+                "url": f"https://{SITE_DOMAIN}/",
+                "name": SITE_TITLE,
+                "description": SITE_TAGLINE,
+                "inLanguage": "ru",
+                "publisher": {"@type": "Person", "name": "Никита Бороздов", "url": "https://borozdov.ru/"},
+            },
+            {
+                "@type": "Dataset",
+                "@id": f"https://{SITE_DOMAIN}/#dataset",
+                "name": SITE_TITLE,
+                "description": SITE_TAGLINE,
+                "url": f"https://{SITE_DOMAIN}/",
+                "inLanguage": "ru",
+                "keywords": ["рекорды России", "плавание", "бассейн 50 м", "бассейн 25 м", "эстафеты"],
+                "dateModified": data["fetched_at"],
+                "temporalCoverage": f"{year_min}/{year_max}",
+                "isBasedOn": data["source_url"],
+                "license": "https://creativecommons.org/licenses/by/4.0/",
+                "creator": {"@type": "Organization", "name": "Всероссийская федерация плавания", "url": "https://russwimming.ru"},
+                "distribution": [
+                    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": f"https://{SITE_DOMAIN}/records.json"},
+                    {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": f"https://{SITE_DOMAIN}/records.csv"},
+                    {"@type": "DataDownload", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "contentUrl": f"https://{SITE_DOMAIN}/records.xlsx"},
+                    {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": f"https://{SITE_DOMAIN}/records.md"},
+                    {"@type": "DataDownload", "encodingFormat": "text/plain", "contentUrl": f"https://{SITE_DOMAIN}/records.txt"},
+                ],
+            },
+            {
+                "@type": "FAQPage",
+                "@id": f"https://{SITE_DOMAIN}/#faq",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q,
+                        "acceptedAnswer": {"@type": "Answer", "text": a},
+                    }
+                    for q, a in FAQ_ITEMS
+                ],
+            },
         ],
     }, ensure_ascii=False)
 
+    downloads_html = "".join(
+        f'<a class="dl-card" href="./{fname}" download>'
+        f'<span class="fmt">{fmt}</span>'
+        f'<span class="dl-card-hint">{hint}</span></a>'
+        for fname, fmt, hint in DOWNLOAD_FORMATS
+    )
+    faq_html = "".join(
+        f'<div class="faq-item"><h3>{html.escape(q)}</h3><p>{html.escape(a)}</p></div>'
+        for q, a in FAQ_ITEMS
+    )
+
     html_doc = INDEX_TEMPLATE.format(
-        title=html.escape(SITE_TITLE),
+        title=html.escape(f"{SITE_TITLE} — таблица {year_max}, бассейны 50 и 25 м"),
+        og_title=html.escape(SITE_TITLE),
         description=html.escape(SITE_TAGLINE),
         keywords=html.escape(SITE_KEYWORDS),
         domain=SITE_DOMAIN,
@@ -471,6 +579,8 @@ def write_index(data: dict, out: Path) -> None:
         fetched_at_human=fetched_human,
         history_link=history_link,
         table_html=render_table_html(data),
+        downloads_html=downloads_html,
+        faq_html=faq_html,
         data_json=json.dumps(data, ensure_ascii=False).replace("</", "<\\/"),
     )
     out.write_text(html_doc, encoding="utf-8")
