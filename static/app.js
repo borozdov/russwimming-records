@@ -400,6 +400,50 @@
     return parts.join(" · ");
   };
 
+  /* Обрезка с многоточием: канва иначе уродливо сжимает текст через maxWidth */
+  const ellipsize = (ctx, text, maxW) => {
+    let t = String(text);
+    if (ctx.measureText(t).width <= maxW) return t;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t.trimEnd() + "…";
+  };
+
+  /* Перенос по словам, не больше maxLines строк; хвост — в многоточие */
+  const wrapLines = (ctx, text, maxW, maxLines) => {
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let line = "";
+    for (const w of words) {
+      const test = line ? line + " " + w : w;
+      if (line && ctx.measureText(test).width > maxW) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    if (lines.length > maxLines) {
+      const cut = lines.slice(0, maxLines);
+      cut[maxLines - 1] = ellipsize(ctx, cut[maxLines - 1] + " " + lines.slice(maxLines).join(" "), maxW);
+      return cut;
+    }
+    return lines;
+  };
+
+  /* «(бассейн 25 м)» в экспорте избыточно — бассейн уже в колонке «Категория» */
+  const stripPool = (s) => String(s).replace(/\s*\(бассейн 25 м\)/, "");
+
+  const pluralRecords = (n) => {
+    const t = n % 100;
+    if (t >= 11 && t <= 14) return "РЕКОРДОВ";
+    switch (n % 10) {
+      case 1: return "РЕКОРД";
+      case 2: case 3: case 4: return "РЕКОРДА";
+      default: return "РЕКОРДОВ";
+    }
+  };
+
   const renderShareCanvas = () => {
     const records = getVisibleRecords();
     const T = {
@@ -438,13 +482,22 @@
     cols.forEach((c) => { c.x = cx; cx += c.w; });
     cols[4].x += 16; // зазор между «Результат» и «Место»
 
-    const bodyH = COL_H + (records.length === 0 ? 100 : ROW_H * records.length);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Измерения до задания размеров: смена width/height сбрасывает состояние контекста
+    ctx.font = `400 10px ${SANS}`;
+    const rosterLines = records.map((r) =>
+      r.roster ? wrapLines(ctx, r.roster.join(", "), cols[2].w - 16, 2) : null
+    );
+    const rowHeights = records.map((r, i) =>
+      rosterLines[i] ? (rosterLines[i].length > 1 ? 74 : 62) : ROW_H
+    );
+    const bodyH = COL_H + (records.length === 0 ? 100 : rowHeights.reduce((a, b) => a + b, 0));
     const H = HEADER_H + bodyH + 2 + FOOTER_H;
 
-    const canvas = document.createElement("canvas");
     canvas.width = W * DPR;
     canvas.height = H * DPR;
-    const ctx = canvas.getContext("2d");
     ctx.scale(DPR, DPR);
 
     // Канва
@@ -466,11 +519,14 @@
     ctx.font = `400 14px ${SANS}`;
     ctx.fillText(ft ? "Фильтры: " + ft : "Полная таблица", PAD, 120);
 
-    // Главная цифра — инверсия
+    // Главная цифра — инверсия; ширина плашки — по большему из числа и подписи
     const countStr = String(records.length);
+    const countLabel = pluralRecords(records.length);
     ctx.font = `700 34px ${MONO}`;
     const cw = ctx.measureText(countStr).width;
-    const plaqueW = cw + 44;
+    ctx.font = `600 9px ${SANS}`;
+    const lw = ctx.measureText(countLabel).width;
+    const plaqueW = Math.max(cw, lw) + 44;
     const plaqueH = 64;
     const plaqueX = W - PAD - plaqueW;
     const plaqueY = 48;
@@ -480,9 +536,10 @@
     ctx.fill();
     ctx.fillStyle = T.canvas;
     ctx.textBaseline = "top";
+    ctx.font = `700 34px ${MONO}`;
     ctx.fillText(countStr, plaqueX + 22, plaqueY + 10);
     ctx.font = `600 9px ${SANS}`;
-    ctx.fillText("РЕКОРДОВ", plaqueX + 22, plaqueY + 46);
+    ctx.fillText(countLabel, plaqueX + 22, plaqueY + 46);
 
     // Карта таблицы: surface + hairline, радиус 8
     const cardY = HEADER_H;
@@ -527,13 +584,14 @@
       ctx.fillText("Нет данных", W / 2, cardY + COL_H + 50);
       ctx.textAlign = "left";
     } else {
+      let ry = cardY + COL_H;
       records.forEach((rec, i) => {
-        const ry = cardY + COL_H + i * ROW_H;
-        const mid = ry + ROW_H / 2;
+        const rowH = rowHeights[i];
+        const mid = ry + rowH / 2;
 
         // Зебра
         ctx.fillStyle = i % 2 === 1 ? T.zebra : T.surface;
-        ctx.fillRect(PAD, ry, tableW, ROW_H);
+        ctx.fillRect(PAD, ry, tableW, rowH);
 
         // Hairline между строками
         if (i > 0) {
@@ -548,10 +606,11 @@
         ctx.textBaseline = "middle";
         ctx.fillStyle = T.ink;
         ctx.font = `500 13px ${SANS}`;
-        const discY = mid;
-        ctx.fillText(rec.discipline, cols[0].x, discY, cols[0].w - 66);
+        const badgeSpace = isFresh(rec.date) ? 64 : 0;
+        const discipline = ellipsize(ctx, stripPool(rec.discipline), cols[0].w - 20 - badgeSpace);
+        ctx.fillText(discipline, cols[0].x, mid);
         if (isFresh(rec.date)) {
-          const bx = cols[0].x + Math.min(ctx.measureText(rec.discipline).width, cols[0].w - 66) + 8;
+          const bx = cols[0].x + ctx.measureText(discipline).width + 8;
           ctx.font = `600 8px ${SANS}`;
           const bw = ctx.measureText("НОВОЕ").width + 12;
           ctx.fillStyle = T.ink;
@@ -565,18 +624,26 @@
         // Категория
         ctx.fillStyle = T.slate;
         ctx.font = `400 11.5px ${SANS}`;
-        ctx.fillText(rec._category_title, cols[1].x, mid, cols[1].w - 12);
+        ctx.fillText(ellipsize(ctx, rec._category_title, cols[1].w - 12), cols[1].x, mid);
 
-        // Спортсмен (+ состав эстафеты)
+        // Спортсмен (+ состав эстафеты в 1–2 строки)
         ctx.fillStyle = T.soft;
         ctx.font = `500 13px ${SANS}`;
-        if (rec.roster) {
-          ctx.fillText(rec.athlete, cols[2].x, mid - 9, cols[2].w - 12);
+        const athleteMaxW = cols[2].w - 16;
+        if (rosterLines[i]) {
+          const lines = rosterLines[i];
+          const blockH = 17 + lines.length * 14;
+          let ty = ry + (rowH - blockH) / 2 + 8;
+          ctx.fillText(ellipsize(ctx, rec.athlete, athleteMaxW), cols[2].x, ty);
           ctx.fillStyle = T.slate;
           ctx.font = `400 10px ${SANS}`;
-          ctx.fillText(rec.roster.join(", "), cols[2].x, mid + 10, cols[2].w - 12);
+          ty += 17;
+          for (const line of lines) {
+            ctx.fillText(line, cols[2].x, ty);
+            ty += 14;
+          }
         } else {
-          ctx.fillText(rec.athlete, cols[2].x, mid, cols[2].w - 12);
+          ctx.fillText(ellipsize(ctx, rec.athlete, athleteMaxW), cols[2].x, mid);
         }
 
         // Результат — моно, главный герой строки
@@ -589,7 +656,7 @@
         // Место
         ctx.fillStyle = T.soft;
         ctx.font = `400 12px ${SANS}`;
-        ctx.fillText(rec.location, cols[4].x, mid, cols[4].w - 12);
+        ctx.fillText(ellipsize(ctx, rec.location, cols[4].w - 12), cols[4].x, mid);
 
         // Дата — моно
         ctx.fillStyle = T.slate;
@@ -597,6 +664,8 @@
         ctx.textAlign = "right";
         ctx.fillText(fmtDate(rec.date, rec.date_original), cols[5].x + cols[5].w - 8, mid);
         ctx.textAlign = "left";
+
+        ry += rowH;
       });
     }
 
@@ -679,13 +748,14 @@
           });
         }
         const canvas = renderShareCanvas();
-        const imgData = canvas.toDataURL("image/png");
+        // JPEG: PNG jsPDF кладёт несжатым растром — файл раздувается до сотни МБ
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
         const { jsPDF } = window.jspdf;
         const px2mm = 1 / 3.7795275591;
         const w = canvas.width * px2mm;
         const h = canvas.height * px2mm;
-        const pdf = new jsPDF({ orientation: w > h ? "landscape" : "portrait", unit: "mm", format: [w, h] });
-        pdf.addImage(imgData, "PNG", 0, 0, w, h);
+        const pdf = new jsPDF({ orientation: w > h ? "landscape" : "portrait", unit: "mm", format: [w, h], compress: true });
+        pdf.addImage(imgData, "JPEG", 0, 0, w, h);
         pdf.save(`records-${stamp()}.pdf`);
       } catch (err) {
         console.error(err);

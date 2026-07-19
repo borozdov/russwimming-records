@@ -77,8 +77,9 @@ def write_xlsx(data: dict, out: Path) -> None:
 
     header_font = Font(bold=True, color="FAFAFA")
     header_fill = PatternFill("solid", fgColor="0D0D0D")
-    mono_font = Font(name="Menlo")
+    mono_font = Font(name="Consolas")  # есть в Office на macOS и Windows
     center = Alignment(horizontal="center", vertical="center")
+    right = Alignment(horizontal="right")
 
     for cat in data["categories"]:
         title = cat["title"][:31]  # sheet name limit
@@ -103,9 +104,11 @@ def write_xlsx(data: dict, out: Path) -> None:
         widths = [34, 26, 42, 12, 22, 14]
         for i, w in enumerate(widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = w
-        # monospace for the result column (col 4)
+        # результат (кол. 4) — моно и вправо, как на сайте
         for row_idx in range(2, ws.max_row + 1):
-            ws.cell(row=row_idx, column=4).font = mono_font
+            cell = ws.cell(row=row_idx, column=4)
+            cell.font = mono_font
+            cell.alignment = right
         ws.freeze_panes = "A2"
 
     # Summary / all-in-one sheet
@@ -120,6 +123,12 @@ def write_xlsx(data: dict, out: Path) -> None:
     widths = [28, 34, 10, 24, 42, 12, 14, 22, 14, 14]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
+    # результат (кол. 6) и секунды (кол. 7) — моно и вправо
+    for row_idx in range(2, ws.max_row + 1):
+        for col_idx in (6, 7):
+            cell = ws.cell(row=row_idx, column=col_idx)
+            cell.font = mono_font
+            cell.alignment = right
     ws.freeze_panes = "A2"
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -154,14 +163,33 @@ def write_markdown(data: dict, out: Path) -> None:
 
 def write_txt(data: dict, out: Path) -> None:
     """Fixed-width plain-text dump — handy for grep / terminal users."""
-    rows = []
+    entries = []
     for cat in data["categories"]:
-        rows.append(f"=== {cat['title']} ===")
         for r in cat["records"]:
             athlete = r["athlete"]
             if r["roster"]:
                 athlete += " (" + ", ".join(r["roster"]) + ")"
-            rows.append(f"  {r['discipline']:<42}  {r['result']:>9}  {athlete:<60}  {r['location']:<22}  {r['date_original']}")
+            entries.append((cat["title"], r["discipline"], r["result"], athlete,
+                            r["location"], r["date_original"]))
+
+    # ширины колонок — по фактическим данным, чтобы эстафеты не ломали сетку
+    disc_w = max(len(e[1]) for e in entries)
+    res_w = max(len(e[2]) for e in entries)
+    ath_w = max(len(e[3]) for e in entries)
+    loc_w = max(len(e[4]) for e in entries)
+
+    rows = [
+        SITE_TITLE.upper(),
+        f"Источник: {data['source_url']}",
+        f"Обновлено: {data['fetched_at']} · всего рекордов: {data['total_records']}",
+        "",
+    ]
+    for cat in data["categories"]:
+        rows.append(f"=== {cat['title']} ===")
+        for title, disc, res, athlete, loc, date in entries:
+            if title != cat["title"]:
+                continue
+            rows.append(f"  {disc:<{disc_w}}  {res:>{res_w}}  {athlete:<{ath_w}}  {loc:<{loc_w}}  {date}")
         rows.append("")
     out.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
