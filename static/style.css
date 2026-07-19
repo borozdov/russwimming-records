@@ -228,74 +228,58 @@ a:hover { text-decoration-color: var(--ink); }
 }
 .dl-panel .hint { font-size: 12px; color: var(--slate); white-space: nowrap; }
 
-/* ── Герой ──────────────────────────────────────────────── */
+/* ── Герой (компактный: таблица должна попадать в первый экран) ── */
 
-.hero { padding: 48px 0 40px; }
-@media (min-width: 768px) { .hero { padding: 80px 0 56px; } }
+.hero { padding: 26px 0 18px; }
+@media (min-width: 768px) { .hero { padding: 40px 0 24px; } }
 
 .hero h1 {
-  margin-top: 18px;
-  font-size: clamp(34px, 8.5vw, 88px);
+  margin-top: 12px;
+  font-size: clamp(28px, 4.6vw, 54px);
   font-weight: 600;
-  line-height: 0.98;
+  line-height: 1.02;
   text-transform: uppercase;
   letter-spacing: -0.02em;
-  max-width: 14ch;
 }
 
 .hero-meta {
-  margin-top: 22px;
-  max-width: 58ch;
-  font-size: 15px;
+  margin-top: 10px;
+  max-width: 72ch;
+  font-size: 14px;
   color: var(--soft);
 }
-@media (min-width: 768px) { .hero-meta { font-size: 17px; } }
+@media (min-width: 768px) { .hero-meta { font-size: 15px; } }
 
-.hero-links { margin-top: 10px; font-size: 13px; color: var(--slate); }
+.hero-links { margin-top: 6px; font-size: 13px; color: var(--slate); }
 .hero-links a { color: var(--soft); }
 
-/* Полоса цифр героя */
+/* Строка цифр героя — одна компактная линия */
 .stat-strip {
-  margin-top: 40px;
-  display: grid;
-  grid-template-columns: 1fr;
+  margin-top: 18px;
+  padding: 12px 0;
   border-top: 1px solid var(--hairline);
-}
-@media (min-width: 640px) { .stat-strip { grid-template-columns: repeat(3, 1fr); } }
-
-.stat {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--hairline);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 8px 36px;
 }
-@media (min-width: 640px) {
-  .stat { display: block; border-bottom: none; padding: 26px 32px 0 0; }
-}
+
+.stat { display: flex; align-items: baseline; gap: 10px; }
 
 .stat-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 28px;
+  font-weight: 600;
+  font-size: 18px;
   line-height: 1;
   white-space: nowrap;
 }
-@media (min-width: 768px) { .stat-value { font-size: 42px; } }
-
-.stat-note { text-align: right; }
-@media (min-width: 640px) { .stat-note { margin-top: 10px; text-align: left; } }
-.stat-note .label { display: block; margin-top: 2px; }
-.stat-note-text { font-size: 13px; color: var(--soft); }
 
 /* ── Панель управления ──────────────────────────────────── */
 
 .controls {
   border-top: 1px solid var(--hairline);
-  padding-top: 24px;
-  margin-bottom: 20px;
+  padding-top: 16px;
+  margin-bottom: 16px;
 }
 
 .search-row {
@@ -356,12 +340,26 @@ a:hover { text-decoration-color: var(--ink); }
 .result-count { white-space: nowrap; }
 .result-count b { font-weight: 500; color: var(--ink); }
 
-/* Фильтры-чипы */
-.filters { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+/* Фильтры-чипы: единый поток, чтобы занимать меньше высоты */
+.filters {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 28px;
+}
 
 .filter-group { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.filter-group .label { flex: 0 0 64px; }
-@media (max-width: 480px) { .filter-group .label { flex-basis: 100%; } }
+
+/* Кнопка «Фильтры» видна только на мобильных — там чипы свёрнуты */
+.filters-toggle { display: none; }
+
+@media (max-width: 719px) {
+  .filters-toggle { display: inline-flex; }
+  .filters { display: none; flex-direction: column; gap: 12px; }
+  .filters.open { display: flex; }
+  .filter-group .label { flex-basis: 100%; }
+}
 
 .chip {
   font-family: var(--font-sans);

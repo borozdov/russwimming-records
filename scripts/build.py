@@ -345,26 +345,14 @@ INDEX_TEMPLATE = """<!doctype html>
     <p class="label">Официальное зеркало · Всероссийская федерация плавания</p>
     <h1>Рекорды России по&nbsp;плаванию</h1>
     <p class="hero-meta">
-      Действующие рекорды России: вольный стиль, на спине, брасс, баттерфляй,
-      комплекс и эстафеты. Мужчины, женщины и смешанные команды, бассейны 50 и 25 метров.
-    </p>
-    <p class="hero-links">
-      Источник: <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru/records/russia/</a>
-      · Обновляется автоматически раз в сутки
+      Действующие рекорды России во всех дисциплинах — личные и эстафеты,
+      бассейны 50 и 25 метров. Источник:
+      <a href="{source_url}" rel="noopener" target="_blank">russwimming.ru</a>.
     </p>
     <div class="stat-strip">
-      <div class="stat">
-        <div class="stat-value">{total}</div>
-        <div class="stat-note"><span class="stat-note-text">Действующих рекордов</span><span class="label">В таблице</span></div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">{latest_record}</div>
-        <div class="stat-note"><span class="stat-note-text">Последний рекорд</span><span class="label">Дата</span></div>
-      </div>
-      <div class="stat">
-        <div class="stat-value"><time datetime="{fetched_at_iso}">{fetched_at_human}</time></div>
-        <div class="stat-note"><span class="stat-note-text">Данные обновлены</span><span class="label">Раз в сутки</span></div>
-      </div>
+      <div class="stat"><span class="stat-value">{total}</span><span class="label">Действующих рекордов</span></div>
+      <div class="stat"><span class="stat-value">{latest_record}</span><span class="label">Последний рекорд</span></div>
+      <div class="stat"><span class="stat-value"><time datetime="{fetched_at_iso}">{fetched_at_human}</time></span><span class="label">Обновлено · раз в сутки</span></div>
     </div>
   </section>
 
@@ -375,6 +363,7 @@ INDEX_TEMPLATE = """<!doctype html>
         <input id="search" type="search" placeholder="Фамилия, дисциплина, город…" autocomplete="off" aria-label="Поиск по таблице">
         <span class="search-key" aria-hidden="true">/</span>
       </label>
+      <button class="btn filters-toggle" id="filters-toggle" aria-expanded="false" aria-controls="filters">Фильтры</button>
       <span class="result-count label">Показано <span id="visible-count"><b class="mono">{total}</b> из <span class="mono">{total}</span></span></span>
     </div>
     <div class="filters" id="filters" aria-label="Фильтры"></div>

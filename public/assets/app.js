@@ -102,8 +102,20 @@
   };
 
   const filtersEl = document.getElementById("filters");
+  const filtersToggle = document.getElementById("filters-toggle");
+  if (filtersToggle && filtersEl) {
+    filtersToggle.addEventListener("click", () => {
+      const open = filtersEl.classList.toggle("open");
+      filtersToggle.setAttribute("aria-expanded", String(open));
+    });
+  }
+
   const renderFilters = () => {
     if (!filtersEl) return;
+    if (filtersToggle) {
+      const n = Object.values(state.filters).filter((v) => v !== "all").length;
+      filtersToggle.textContent = n ? `Фильтры · ${n}` : "Фильтры";
+    }
     let html = filterGroups.map((g) =>
       `<div class="filter-group" role="group" aria-label="${g.label}">` +
       `<span class="label">${g.label}</span>` +
