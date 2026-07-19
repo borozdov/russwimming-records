@@ -526,20 +526,23 @@
     const cw = ctx.measureText(countStr).width;
     ctx.font = `600 9px ${SANS}`;
     const lw = ctx.measureText(countLabel).width;
-    const plaqueW = Math.max(cw, lw) + 44;
-    const plaqueH = 64;
+    const plaqueH = 68;
+    const plaqueW = Math.max(Math.max(cw, lw) + 36, plaqueH); // не уже, чем высота
     const plaqueX = W - PAD - plaqueW;
     const plaqueY = 48;
+    const plaqueCX = plaqueX + plaqueW / 2;
     ctx.fillStyle = T.ink;
     ctx.beginPath();
     ctx.roundRect(plaqueX, plaqueY, plaqueW, plaqueH, 4);
     ctx.fill();
     ctx.fillStyle = T.canvas;
     ctx.textBaseline = "top";
+    ctx.textAlign = "center";
     ctx.font = `700 34px ${MONO}`;
-    ctx.fillText(countStr, plaqueX + 22, plaqueY + 10);
+    ctx.fillText(countStr, plaqueCX, plaqueY + 12);
     ctx.font = `600 9px ${SANS}`;
-    ctx.fillText(countLabel, plaqueX + 22, plaqueY + 46);
+    ctx.fillText(countLabel, plaqueCX, plaqueY + 49);
+    ctx.textAlign = "left";
 
     // Карта таблицы: surface + hairline, радиус 8
     const cardY = HEADER_H;
