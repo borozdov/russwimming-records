@@ -861,7 +861,10 @@ tbody.is-empty { display: none !important; }
     top: calc(var(--header-stick) + var(--controls-h));
     z-index: 5;
   }
-  tr.group-row td {
+  /* table.records tbody — специфичность выше, чем у `tr.group-row td`,
+     иначе обнуление паддинга для карточной вёрстки (строка выше) перебивает
+     этот отступ, и заголовок группы прилипает к левому краю */
+  table.records tbody tr.group-row td {
     display: block;
     position: static;
     padding: 9px 16px;
