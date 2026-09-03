@@ -31,7 +31,6 @@
   --ink: #fafafa;
   --focus-ring: rgba(250, 250, 250, 0.22);
   --scrim: rgba(0, 0, 0, 0.72);
-  --edge-shadow: rgba(255, 255, 255, 0.24);
 }
 
 :root[data-theme="titan"] {
@@ -48,7 +47,6 @@
   --ink: #0d0d0d;
   --focus-ring: rgba(13, 13, 13, 0.22);
   --scrim: rgba(13, 13, 13, 0.5);
-  --edge-shadow: rgba(13, 13, 13, 0.26);
 }
 
 /* Фолбэки с подогнанными метриками: пока грузятся Inter и JetBrains Mono,
@@ -767,13 +765,6 @@ tbody.is-empty { display: none !important; }
     overscroll-behavior-x: contain;
   }
   .filters::-webkit-scrollbar { display: none; }
-  /* Тень с края — подсказка «листай», без запрещённого брендбуком градиента
-     поверх контента: box-shadow ложится по границе контейнера, а не на чипы */
-  .filters.has-scroll-start { box-shadow: inset 18px 0 14px -12px var(--edge-shadow); }
-  .filters.has-scroll-end { box-shadow: inset -18px 0 14px -12px var(--edge-shadow); }
-  .filters.has-scroll-start.has-scroll-end {
-    box-shadow: inset 18px 0 14px -12px var(--edge-shadow), inset -18px 0 14px -12px var(--edge-shadow);
-  }
   .filter-group { flex: 0 0 auto; scroll-snap-align: start; }
   /* Hairline между группами: видно, что за краем — продолжение, а не конец */
   .filter-group + .filter-group { padding-left: 12px; border-left: 1px solid var(--hairline); }
@@ -807,11 +798,6 @@ tbody.is-empty { display: none !important; }
     border-bottom: 1px solid var(--hairline);
   }
   table.records thead tr::-webkit-scrollbar { display: none; }
-  table.records thead tr.has-scroll-start { box-shadow: inset 18px 0 14px -12px var(--edge-shadow); }
-  table.records thead tr.has-scroll-end { box-shadow: inset -18px 0 14px -12px var(--edge-shadow); }
-  table.records thead tr.has-scroll-start.has-scroll-end {
-    box-shadow: inset 18px 0 14px -12px var(--edge-shadow), inset -18px 0 14px -12px var(--edge-shadow);
-  }
   table.records th {
     position: static;
     flex: 0 0 auto;
