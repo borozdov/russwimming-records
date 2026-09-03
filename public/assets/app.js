@@ -366,6 +366,24 @@
 
   buildFilters();
 
+  /* Подсказка «тут можно листать вбок» для лент, которые скроллятся
+     на телефоне (фильтры, шапка таблицы): без неё край, обрезанный
+     кромкой экрана, легко принять за конец ленты, а не за продолжение. */
+  const bindScrollEdges = (el) => {
+    if (!el) return;
+    const update = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      el.classList.toggle("has-scroll-start", el.scrollLeft > 4);
+      el.classList.toggle("has-scroll-end", el.scrollLeft < max - 4);
+    };
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+    return update;
+  };
+  bindScrollEdges(filtersEl);
+  bindScrollEdges($("table.records thead tr"));
+
   /* Высоту липкой панели CSS знать не может: она зависит от переносов
      в конкретной ширине. Без этого заголовок категории прилипает ПОД панель. */
   const controlsEl = $(".controls");

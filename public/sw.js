@@ -3,9 +3,9 @@
    когда меняются байты, поэтому sw.js стабилен от сборки к сборке. */
 "use strict";
 
-const APP = "app-1641fc1bf8d5";
+const APP = "app-d10d439249b5";
 const STATIC = "static-243e20ca0f28";
-const APP_FILES = ["/", "/women-lcm/", "/women-scm/", "/men-lcm/", "/men-scm/", "/mixed/", "/offline.html", "/assets/style.css?v=22e301ed", "/assets/app.js?v=ec3b93cb", "/site.webmanifest"];
+const APP_FILES = ["/", "/women-lcm/", "/women-scm/", "/men-lcm/", "/men-scm/", "/mixed/", "/offline.html", "/assets/style.css?v=b4af603b", "/assets/app.js?v=f983fe9b", "/site.webmanifest"];
 const FONTS = ["/assets/fonts/inter-cyrillic.woff2?v=aebf2ab4", "/assets/fonts/inter-latin.woff2?v=c9407645", "/assets/fonts/jetbrains-mono-cyrillic.woff2?v=4995a9a4", "/assets/fonts/jetbrains-mono-latin.woff2?v=2c32b9b3"];
 const OFFLINE = "/offline.html";
 const NET_TIMEOUT = 3000;
