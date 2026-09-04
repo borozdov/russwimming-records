@@ -543,16 +543,19 @@ ym(109049034, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLa
 # По горизонтали x=49, а не 50: text-anchor центрует по ширине с учётом апрошей, а у
 # «Р» правый апрош больше левого — при x=50 очко уезжает вправо на ~1.3% во всех
 # фолбэках стека. Сдвиг на единицу оставляет ≤0.5% в каждом.
+#
+# Пишется в public/favicon.svg отдельным файлом, а не data-URI: Яндексу для
+# карточки в поиске нужен фавикон, доступный по прямой ссылке (200 OK) —
+# data-URI он файлом не считает.
 FAVICON = (
-    "data:image/svg+xml;utf8,"
     "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
-    "<rect width='100' height='100' rx='16' fill='%23fafafa'/>"
+    "<rect width='100' height='100' rx='16' fill='#fafafa'/>"
     "<text x='49' y='72.5' text-anchor='middle' "
     "font-family='Inter,Helvetica Neue,Helvetica,Arial,sans-serif' "
     # 600, а не 700: PNG-иконки рисуются Inter SemiBold из scripts/og-fonts/, и
     # у того, у кого Inter стоит в системе, фавикон должен совпадать с ними.
     # У фолбэков промежуточного начертания нет — там как был Bold, так и остался.
-    "font-weight='600' font-size='62' fill='%230d0d0d'>Р</text></svg>"
+    "font-weight='600' font-size='62' fill='#0d0d0d'>Р</text></svg>"
 )
 
 PAGE_TEMPLATE = """<!doctype html>
@@ -584,7 +587,7 @@ PAGE_TEMPLATE = """<!doctype html>
 <meta name="twitter:image" content="https://{domain}/og-image.png">
 <meta name="google-site-verification" content="qOwWmdq24kGcVTyxc1GL2W8TxQk63Z5lBH3NSv4hH4s">
 <meta name="yandex-verification" content="80f947e774535d84">
-<link rel="icon" href="{favicon}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Рекорды">
@@ -881,7 +884,6 @@ def render_page(*, data: dict, categories: list[dict], canonical: str, title: st
         keywords=html.escape(SITE_KEYWORDS),
         canonical=canonical,
         domain=SITE_DOMAIN,
-        favicon=FAVICON,
         jsonld=jsonld_graph(data, canonical, og_title, description, records, with_faq),
         source_url=html.escape(data["source_url"]),
         eyebrow_html=f'<p class="label">{html.escape(eyebrow)}</p>' if eyebrow else "",
@@ -1342,6 +1344,7 @@ def main() -> int:
     write_markdown(clean, PUBLIC / "records.md")
     write_txt(clean, PUBLIC / "records.txt")
 
+    (PUBLIC / "favicon.svg").write_text(FAVICON, encoding="utf-8")
     gen_icons.render(PUBLIC, ICON_LETTER)
     gen_screens.render(
         data, PUBLIC,
