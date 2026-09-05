@@ -991,9 +991,10 @@ def webmanifest(categories: list[dict] | None = None) -> str:
         "display": "standalone",
         "display_override": ["standalone", "minimal-ui"],
         "orientation": "any",
-        # Обсидиан и в фоне, и в theme_color: сплэш PWA рисуется background_color,
-        # и на светлом фоне тёмная иконка вспыхивала бы белым кадром перед стартом.
-        "background_color": "#0d0d0d",
+        # background_color — это фон сплэша PWA, и он идёт за иконкой: иконка
+        # белая, значит белый и он, иначе перед стартом мигал бы тёмный кадр.
+        # theme_color красит системные панели и остаётся обсидиановым.
+        "background_color": "#ffffff",
         "theme_color": "#0d0d0d",
         "categories": ["sports", "reference"],
         # Повторный запуск с ярлыка переключает в уже открытое окно, а не плодит новые

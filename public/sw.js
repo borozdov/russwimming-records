@@ -3,7 +3,7 @@
    когда меняются байты, поэтому sw.js стабилен от сборки к сборке. */
 "use strict";
 
-const APP = "app-49af91149e48";
+const APP = "app-bf1ee753345f";
 const STATIC = "static-243e20ca0f28";
 const APP_FILES = ["/", "/women-lcm/", "/women-scm/", "/men-lcm/", "/men-scm/", "/mixed/", "/offline.html", "/assets/style.css?v=679a16e6", "/assets/app.js?v=46c6319b", "/site.webmanifest"];
 const FONTS = ["/assets/fonts/inter-cyrillic.woff2?v=aebf2ab4", "/assets/fonts/inter-latin.woff2?v=c9407645", "/assets/fonts/jetbrains-mono-cyrillic.woff2?v=4995a9a4", "/assets/fonts/jetbrains-mono-latin.woff2?v=2c32b9b3"];
