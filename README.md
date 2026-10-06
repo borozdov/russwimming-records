@@ -1,6 +1,6 @@
 # Рекорды России по плаванию
 
-[![Ежедневное обновление](https://github.com/borozdov/russwimming-records/actions/workflows/update.yml/badge.svg)](https://github.com/borozdov/russwimming-records/actions/workflows/update.yml) [![Рекордов](https://img.shields.io/badge/рекордов-90-0d0d0d)](https://russwimming-records.borozdov.ru/records.json) [![Обновлено](https://img.shields.io/badge/обновлено-02.09.2026-0d0d0d)](https://russwimming-records.borozdov.ru) [![License: MIT](https://img.shields.io/badge/license-MIT-0d0d0d)](LICENSE)
+[![Ежедневное обновление](https://github.com/borozdov/russwimming-records/actions/workflows/update.yml/badge.svg)](https://github.com/borozdov/russwimming-records/actions/workflows/update.yml) [![Рекордов](https://img.shields.io/badge/рекордов-90-0d0d0d)](https://russwimming-records.borozdov.ru/records.json) [![Обновлено](https://img.shields.io/badge/обновлено-06.10.2026-0d0d0d)](https://russwimming-records.borozdov.ru) [![License: MIT](https://img.shields.io/badge/license-MIT-0d0d0d)](LICENSE)
 
 Автообновляемое зеркало таблицы рекордов с [russwimming.ru](https://russwimming.ru/records/russia/).
 Раз в сутки GitHub Actions забирает страницу источника, пересобирает статический
@@ -15,9 +15,9 @@
 |---|---|
 | Действующих рекордов | **90** |
 | Категорий | **5** |
-| Обновлено за 12 месяцев | **8** |
+| Обновлено за 12 месяцев | **10** |
 | Даты рекордов | 2006–2026 |
-| Синхронизировано с источником | 02.09.2026 |
+| Синхронизировано с источником | 06.10.2026 |
 
 ## Категории
 
