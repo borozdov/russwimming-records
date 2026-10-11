@@ -1,6 +1,6 @@
 {
   "source_url": "https://russwimming.ru/records/russia/",
-  "fetched_at": "2026-10-06T13:11:14Z",
+  "fetched_at": "2026-10-11T12:35:28Z",
   "total_records": 90,
   "categories": [
     {
@@ -1204,11 +1204,11 @@
           "is_25m_pool": true,
           "athlete": "Корнев Егор",
           "roster": null,
-          "result": "21.64",
-          "result_seconds": 21.64,
-          "location": "Баку",
-          "date": "2026-10-03",
-          "date_original": "03.10.2026"
+          "result": "21.28",
+          "result_seconds": 21.28,
+          "location": "Ташкент",
+          "date": "2026-10-10",
+          "date_original": "10.10.2026"
         },
         {
           "discipline": "вольный стиль 50 м (бассейн 25 м)",
