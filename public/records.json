@@ -1,6 +1,6 @@
 {
   "source_url": "https://russwimming.ru/records/russia/",
-  "fetched_at": "2026-10-11T12:35:28Z",
+  "fetched_at": "2026-11-12T14:59:21Z",
   "total_records": 90,
   "categories": [
     {
@@ -1304,13 +1304,13 @@
           "distance_m": 100,
           "stroke_id": "im",
           "is_25m_pool": true,
-          "athlete": "Морозов Владимир",
+          "athlete": "Корнев Егор",
           "roster": null,
-          "result": "50.26",
-          "result_seconds": 50.26,
-          "location": "Эйндховен",
-          "date": "2018-09-28",
-          "date_original": "28.09.2018"
+          "result": "50.23",
+          "result_seconds": 50.23,
+          "location": "Санкт-Петербург",
+          "date": "2026-11-08",
+          "date_original": "08.11.2026"
         },
         {
           "discipline": "на спине 200 м (бассейн 25 м)",
